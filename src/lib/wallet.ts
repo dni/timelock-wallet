@@ -39,6 +39,41 @@ function pubkeyToP2WPKH(pubkey: Uint8Array): string {
   return bech32.encode('bc', [0, ...bech32.toWords(h160)])
 }
 
+const ZPUB_VERSIONS = { private: 0x04b2430c, public: 0x04b24746 }
+
+function parseAccountKey(xpub: string): HDKey {
+  try {
+    return HDKey.fromExtendedKey(xpub)
+  } catch {
+    return HDKey.fromExtendedKey(xpub, ZPUB_VERSIONS)
+  }
+}
+
+export function validateXpub(xpub: string): boolean {
+  try {
+    parseAccountKey(xpub.trim())
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function deriveStandardAddressesFromXpub(xpub: string, count = 10): StandardAddress[] {
+  const account = parseAccountKey(xpub.trim())
+  const addresses: StandardAddress[] = []
+  for (let i = 0; i < count; i++) {
+    const child = account.derive(`m/0/${i}`)
+    const pubkey = child.publicKey!
+    addresses.push({
+      index: i,
+      path: `m/84'/0'/0'/0/${i}`,
+      address: pubkeyToP2WPKH(pubkey),
+      pubkeyHex: bytesToHex(pubkey),
+    })
+  }
+  return addresses
+}
+
 export function deriveStandardAddresses(
   mnemonic: string,
   passphrase = '',

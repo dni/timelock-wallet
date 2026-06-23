@@ -572,9 +572,14 @@ tr:hover td {
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.btn-cert:hover {
+.btn-cert:hover:not(:disabled) {
   color: var(--accent);
   border-color: var(--accent);
+}
+
+.btn-cert:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
 }
 
 .btn-cert.active {
@@ -701,4 +706,12 @@ tr:hover td {
 
 .cert-output .cert-step-title {
   color: var(--green);
+}
+
+/* ── xpub mode ── */
+
+.xpub-hint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
 }

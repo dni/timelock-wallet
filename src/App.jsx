@@ -4,8 +4,7 @@ import MnemonicPanel from './components/MnemonicPanel';
 import TimelockBonds from './components/TimelockBonds';
 export default function App() {
     const [tab, setTab] = createSignal('wallet');
-    const [mnemonic, setMnemonic] = createSignal('');
-    const [passphrase, setPassphrase] = createSignal('');
+    const [keySource, setKeySource] = createSignal(null);
     return (<div class="app">
       <header class="app-header">
         <div class="header-inner">
@@ -14,8 +13,8 @@ export default function App() {
             <h1>Timelock Wallet</h1>
           </div>
           <nav class="tab-nav">
-            <button class={tab() === 'wallet' ? 'tab-btn active' : 'tab-btn'} onClick={() => setTab('wallet')}>Wallet / BIP39</button>
-            <button class={tab() === 'bonds' ? 'tab-btn active' : 'tab-btn'} onClick={() => setTab('bonds')} disabled={!mnemonic()} title={!mnemonic() ? 'Generate or import a mnemonic first' : ''}>Timelock Bonds / BIP46</button>
+            <button class={tab() === 'wallet' ? 'tab-btn active' : 'tab-btn'} onClick={() => setTab('wallet')}>Wallet</button>
+            <button class={tab() === 'bonds' ? 'tab-btn active' : 'tab-btn'} onClick={() => setTab('bonds')} disabled={!keySource()} title={!keySource() ? 'Load a mnemonic or xpub first' : ''}>Timelock Bonds / BIP46</button>
           </nav>
         </div>
       </header>
@@ -24,11 +23,11 @@ export default function App() {
         <SecurityWarning />
 
         <Show when={tab() === 'wallet'}>
-          <MnemonicPanel mnemonic={mnemonic()} passphrase={passphrase()} onMnemonicChange={setMnemonic} onPassphraseChange={setPassphrase}/>
+          <MnemonicPanel keySource={keySource()} onKeySourceChange={setKeySource}/>
         </Show>
 
-        <Show when={tab() === 'bonds' && !!mnemonic()}>
-          <TimelockBonds mnemonic={mnemonic()} passphrase={passphrase()}/>
+        <Show when={tab() === 'bonds' && !!keySource()}>
+          <TimelockBonds keySource={keySource()}/>
         </Show>
       </main>
 

@@ -1,13 +1,12 @@
 import { createSignal, Show } from 'solid-js'
-import type { Tab } from './types'
+import type { Tab, KeySource } from './types'
 import SecurityWarning from './components/SecurityWarning'
 import MnemonicPanel from './components/MnemonicPanel'
 import TimelockBonds from './components/TimelockBonds'
 
 export default function App() {
   const [tab, setTab] = createSignal<Tab>('wallet')
-  const [mnemonic, setMnemonic] = createSignal('')
-  const [passphrase, setPassphrase] = createSignal('')
+  const [keySource, setKeySource] = createSignal<KeySource | null>(null)
 
   return (
     <div class="app">
@@ -21,12 +20,12 @@ export default function App() {
             <button
               class={tab() === 'wallet' ? 'tab-btn active' : 'tab-btn'}
               onClick={() => setTab('wallet')}
-            >Wallet / BIP39</button>
+            >Wallet</button>
             <button
               class={tab() === 'bonds' ? 'tab-btn active' : 'tab-btn'}
               onClick={() => setTab('bonds')}
-              disabled={!mnemonic()}
-              title={!mnemonic() ? 'Generate or import a mnemonic first' : ''}
+              disabled={!keySource()}
+              title={!keySource() ? 'Load a mnemonic or xpub first' : ''}
             >Timelock Bonds / BIP46</button>
           </nav>
         </div>
@@ -37,15 +36,13 @@ export default function App() {
 
         <Show when={tab() === 'wallet'}>
           <MnemonicPanel
-            mnemonic={mnemonic()}
-            passphrase={passphrase()}
-            onMnemonicChange={setMnemonic}
-            onPassphraseChange={setPassphrase}
+            keySource={keySource()}
+            onKeySourceChange={setKeySource}
           />
         </Show>
 
-        <Show when={tab() === 'bonds' && !!mnemonic()}>
-          <TimelockBonds mnemonic={mnemonic()} passphrase={passphrase()} />
+        <Show when={tab() === 'bonds' && !!keySource()}>
+          <TimelockBonds keySource={keySource()!} />
         </Show>
       </main>
 

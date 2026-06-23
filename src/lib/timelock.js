@@ -5,6 +5,15 @@ import { bytesToHex } from '@noble/hashes/utils';
 import { bech32 } from '@scure/base';
 import * as btcScript from 'bitcoinjs-lib/src/script';
 const BOND_PATH_PREFIX = "m/84'/0'/0'/2";
+const ZPUB_VERSIONS = { private: 0x04b2430c, public: 0x04b24746 };
+function parseAccountKey(xpub) {
+    try {
+        return HDKey.fromExtendedKey(xpub);
+    }
+    catch {
+        return HDKey.fromExtendedKey(xpub, ZPUB_VERSIONS);
+    }
+}
 export function indexToTimelock(index) {
     if (index < 0 || index > 959)
         throw new Error(`Invalid BIP46 index: ${index}`);
@@ -49,6 +58,27 @@ export function deriveBonds(mnemonic, passphrase = '', startIndex, endIndex) {
     const bonds = [];
     for (let i = startIndex; i <= endIndex; i++) {
         bonds.push(deriveBond(master, i));
+    }
+    return bonds;
+}
+export function deriveBondsFromXpub(xpub, startIndex, endIndex) {
+    const account = parseAccountKey(xpub.trim());
+    const bonds = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+        const { year, month, ts, dateStr } = indexToTimelock(i);
+        const child = account.derive(`m/2/${i}`);
+        const pubkey = child.publicKey;
+        const witnessScript = buildWitnessScript(pubkey, ts);
+        bonds.push({
+            index: i,
+            year,
+            month,
+            timelockTs: ts,
+            timelockDate: dateStr,
+            pubkeyHex: bytesToHex(pubkey),
+            address: witnessScriptToP2WSH(witnessScript),
+            witnessScriptHex: bytesToHex(witnessScript),
+        });
     }
     return bonds;
 }

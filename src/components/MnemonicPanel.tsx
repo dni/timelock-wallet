@@ -1,102 +1,209 @@
 import { createSignal, createMemo, Show } from 'solid-js'
-import { generateMnemonic, validateMnemonic, deriveWallet, deriveStandardAddresses } from '../lib/wallet'
+import {
+  generateMnemonic,
+  validateMnemonic,
+  deriveWallet,
+  deriveStandardAddresses,
+  validateXpub,
+  deriveStandardAddressesFromXpub,
+} from '../lib/wallet'
 import WordGrid from './WordGrid'
 import SeedInfo from './SeedInfo'
 import StandardAddresses from './StandardAddresses'
+import type { KeySource } from '../types'
+
+type InputMode = 'mnemonic' | 'xpub'
 
 interface Props {
-  mnemonic: string
-  passphrase: string
-  onMnemonicChange: (m: string) => void
-  onPassphraseChange: (p: string) => void
+  keySource: KeySource | null
+  onKeySourceChange: (ks: KeySource | null) => void
 }
 
 export default function MnemonicPanel(props: Props) {
+  const [inputMode, setInputMode] = createSignal<InputMode>('mnemonic')
+
+  // mnemonic state
   const [wordCount, setWordCount] = createSignal<12 | 24>(12)
   const [showManual, setShowManual] = createSignal(false)
   const [manualInput, setManualInput] = createSignal('')
-  const [error, setError] = createSignal('')
+  const [mnemonic, setMnemonic] = createSignal('')
+  const [passphrase, setPassphrase] = createSignal('')
+  const [mnemonicError, setMnemonicError] = createSignal('')
+
+  // xpub state
+  const [xpubInput, setXpubInput] = createSignal('')
+  const [activeXpub, setActiveXpub] = createSignal('')
+  const [xpubError, setXpubError] = createSignal('')
+
+  function switchMode(mode: InputMode) {
+    setInputMode(mode)
+    setMnemonicError('')
+    setXpubError('')
+    if (mode === 'mnemonic' && mnemonic()) {
+      props.onKeySourceChange({ type: 'mnemonic', mnemonic: mnemonic(), passphrase: passphrase() })
+    } else if (mode === 'xpub' && activeXpub()) {
+      props.onKeySourceChange({ type: 'xpub', xpub: activeXpub() })
+    } else {
+      props.onKeySourceChange(null)
+    }
+  }
 
   function handleGenerate() {
     const m = generateMnemonic(wordCount())
-    props.onMnemonicChange(m)
+    setMnemonic(m)
     setShowManual(false)
-    setError('')
+    setMnemonicError('')
+    props.onKeySourceChange({ type: 'mnemonic', mnemonic: m, passphrase: passphrase() })
   }
 
   function handleImport() {
     const m = manualInput().trim().toLowerCase().replace(/\s+/g, ' ')
     if (!validateMnemonic(m)) {
-      setError('Invalid mnemonic — check spelling and word count (12 or 24 words required).')
+      setMnemonicError('Invalid mnemonic — check spelling and word count (12 or 24 words required).')
       return
     }
-    setError('')
-    props.onMnemonicChange(m)
+    setMnemonicError('')
+    setMnemonic(m)
     setShowManual(false)
+    props.onKeySourceChange({ type: 'mnemonic', mnemonic: m, passphrase: passphrase() })
+  }
+
+  function handlePassphraseChange(p: string) {
+    setPassphrase(p)
+    if (mnemonic()) {
+      props.onKeySourceChange({ type: 'mnemonic', mnemonic: mnemonic(), passphrase: p })
+    }
+  }
+
+  function handleXpubImport() {
+    const xpub = xpubInput().trim()
+    if (!validateXpub(xpub)) {
+      setXpubError("Invalid xpub — paste a valid account xpub or zpub (m/84'/0'/0')")
+      return
+    }
+    setXpubError('')
+    setActiveXpub(xpub)
+    props.onKeySourceChange({ type: 'xpub', xpub })
   }
 
   const wallet = createMemo(() => {
-    if (!props.mnemonic) return null
-    try { return deriveWallet(props.mnemonic, props.passphrase) } catch { return null }
+    if (!mnemonic() || inputMode() !== 'mnemonic') return null
+    try { return deriveWallet(mnemonic(), passphrase()) } catch { return null }
   })
 
   const addresses = createMemo(() => {
-    if (!props.mnemonic) return []
-    try { return deriveStandardAddresses(props.mnemonic, props.passphrase, 10) } catch { return [] }
+    if (inputMode() === 'mnemonic') {
+      if (!mnemonic()) return []
+      try { return deriveStandardAddresses(mnemonic(), passphrase(), 10) } catch { return [] }
+    } else {
+      if (!activeXpub()) return []
+      try { return deriveStandardAddressesFromXpub(activeXpub(), 10) } catch { return [] }
+    }
   })
+
+  const copyXpub = () => navigator.clipboard.writeText(activeXpub()).catch(() => {})
 
   return (
     <div class="mnemonic-panel">
       <div class="section controls-section">
-        <div class="control-row">
-          <div class="word-count-toggle">
-            <button
-              class={wordCount() === 12 ? 'toggle-btn active' : 'toggle-btn'}
-              onClick={() => setWordCount(12)}
-            >12 words</button>
-            <button
-              class={wordCount() === 24 ? 'toggle-btn active' : 'toggle-btn'}
-              onClick={() => setWordCount(24)}
-            >24 words</button>
-          </div>
-          <button class="btn-primary" onClick={handleGenerate}>Generate New Mnemonic</button>
-          <button class="btn-secondary" onClick={() => { setShowManual(!showManual()); setError('') }}>
-            {showManual() ? 'Cancel' : 'Import Existing'}
-          </button>
+        <div class="word-count-toggle" style={{ 'margin-bottom': '1rem' }}>
+          <button
+            class={inputMode() === 'mnemonic' ? 'toggle-btn active' : 'toggle-btn'}
+            onClick={() => switchMode('mnemonic')}
+          >BIP39 Mnemonic</button>
+          <button
+            class={inputMode() === 'xpub' ? 'toggle-btn active' : 'toggle-btn'}
+            onClick={() => switchMode('xpub')}
+          >Account xpub</button>
         </div>
 
-        <Show when={showManual()}>
-          <div class="manual-input">
+        <Show when={inputMode() === 'mnemonic'}>
+          <div class="control-row">
+            <div class="word-count-toggle">
+              <button
+                class={wordCount() === 12 ? 'toggle-btn active' : 'toggle-btn'}
+                onClick={() => setWordCount(12)}
+              >12 words</button>
+              <button
+                class={wordCount() === 24 ? 'toggle-btn active' : 'toggle-btn'}
+                onClick={() => setWordCount(24)}
+              >24 words</button>
+            </div>
+            <button class="btn-primary" onClick={handleGenerate}>Generate New Mnemonic</button>
+            <button class="btn-secondary" onClick={() => { setShowManual(!showManual()); setMnemonicError('') }}>
+              {showManual() ? 'Cancel' : 'Import Existing'}
+            </button>
+          </div>
+
+          <Show when={showManual()}>
+            <div class="manual-input">
+              <textarea
+                placeholder="Enter your 12 or 24 word mnemonic, space-separated…"
+                value={manualInput()}
+                onInput={(e) => setManualInput(e.currentTarget.value)}
+                rows={4}
+              />
+              <button class="btn-primary" onClick={handleImport}>Import Mnemonic</button>
+              <Show when={mnemonicError()}>
+                <div class="error-msg">{mnemonicError()}</div>
+              </Show>
+            </div>
+          </Show>
+        </Show>
+
+        <Show when={inputMode() === 'xpub'}>
+          <div class="xpub-hint">
+            Paste your account-level xpub or zpub at m/84'/0'/0' — watch-only, no private keys loaded.
+          </div>
+          <div class="manual-input" style={{ 'margin-top': '0.75rem' }}>
             <textarea
-              placeholder="Enter your 12 or 24 word mnemonic, space-separated…"
-              value={manualInput()}
-              onInput={(e) => setManualInput(e.currentTarget.value)}
-              rows={4}
+              class="mono"
+              placeholder="xpub6… or zpub5…"
+              value={xpubInput()}
+              onInput={(e) => { setXpubInput(e.currentTarget.value); setXpubError('') }}
+              rows={3}
             />
-            <button class="btn-primary" onClick={handleImport}>Import Mnemonic</button>
-            <Show when={error()}>
-              <div class="error-msg">{error()}</div>
+            <button class="btn-primary" onClick={handleXpubImport}>Load xpub</button>
+            <Show when={xpubError()}>
+              <div class="error-msg">{xpubError()}</div>
             </Show>
           </div>
         </Show>
       </div>
 
-      <Show when={props.mnemonic}>
+      <Show when={inputMode() === 'mnemonic' && mnemonic()}>
         <div class="section passphrase-section">
           <label class="passphrase-label">
             <span>Optional BIP39 passphrase</span>
             <input
               type="password"
-              value={props.passphrase}
-              onInput={(e) => props.onPassphraseChange(e.currentTarget.value)}
+              value={passphrase()}
+              onInput={(e) => handlePassphraseChange(e.currentTarget.value)}
               placeholder="(empty = no passphrase)"
               class="passphrase-input"
             />
           </label>
         </div>
-
-        <WordGrid mnemonic={props.mnemonic} />
+        <WordGrid mnemonic={mnemonic()} />
         <SeedInfo wallet={wallet()} />
+      </Show>
+
+      <Show when={inputMode() === 'xpub' && activeXpub()}>
+        <div class="section">
+          <div class="copy-field">
+            <div class="copy-field-label">Loaded account xpub (m/84'/0'/0')</div>
+            <div class="copy-row">
+              <span class="field-value mono">{activeXpub()}</span>
+              <button class="btn-copy" onClick={copyXpub}>Copy</button>
+            </div>
+          </div>
+          <div class="inline-warning" style={{ 'margin-top': '0.75rem', 'margin-bottom': 0 }}>
+            Watch-only mode · No private keys · Certificate signing unavailable
+          </div>
+        </div>
+      </Show>
+
+      <Show when={addresses().length > 0}>
         <StandardAddresses addresses={addresses()} />
       </Show>
     </div>

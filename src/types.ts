@@ -36,4 +36,8 @@ export interface Certificate {
   signatureBase64: string
 }
 
+export type KeySource =
+  | { type: 'mnemonic'; mnemonic: string; passphrase: string }
+  | { type: 'xpub'; xpub: string }
+
 export type Tab = 'wallet' | 'bonds'

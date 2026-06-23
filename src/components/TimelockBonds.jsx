@@ -1,5 +1,5 @@
 import { createSignal, createMemo, For, Show } from 'solid-js';
-import { deriveBonds } from '../lib/timelock';
+import { deriveBonds, deriveBondsFromXpub } from '../lib/timelock';
 import CertificateGenerator from './CertificateGenerator';
 const MIN_YEAR = 2020;
 const MAX_YEAR = 2099;
@@ -10,23 +10,36 @@ export default function TimelockBonds(props) {
     const year = () => Math.max(MIN_YEAR, Math.min(MAX_YEAR, filterYear()));
     const startIndex = () => (year() - MIN_YEAR) * 12;
     const endIndex = () => startIndex() + 11;
+    const isXpub = () => props.keySource.type === 'xpub';
     const bonds = createMemo(() => {
-        if (!props.mnemonic)
-            return [];
         try {
-            return deriveBonds(props.mnemonic, props.passphrase, startIndex(), endIndex());
+            if (props.keySource.type === 'mnemonic') {
+                return deriveBonds(props.keySource.mnemonic, props.keySource.passphrase, startIndex(), endIndex());
+            }
+            else {
+                return deriveBondsFromXpub(props.keySource.xpub, startIndex(), endIndex());
+            }
         }
         catch {
             return [];
         }
     });
+    const mnemonicSource = () => props.keySource.type === 'mnemonic' ? props.keySource : null;
     function selectBond(bond) {
+        if (isXpub())
+            return;
         setSelectedBond(b => b?.index === bond.index ? null : bond);
     }
     return (<div class="timelock-bonds">
       <div class="section">
         <h2>BIP46 Fidelity Bond Addresses</h2>
         <div class="path-label">m/84'/0'/0'/2/index — P2WSH with OP_CHECKLOCKTIMEVERIFY</div>
+
+        <Show when={isXpub()}>
+          <div class="inline-warning" style={{ 'margin-bottom': '1rem' }}>
+            Watch-only mode — certificate signing requires the full mnemonic
+          </div>
+        </Show>
 
         <div class="filter-row">
           <label class="year-label">
@@ -76,7 +89,7 @@ export default function TimelockBonds(props) {
                       <td class="mono script-cell">{bond.witnessScriptHex}</td>
                     </Show>
                     <td>
-                      <button class={selectedBond()?.index === bond.index ? 'btn-cert active' : 'btn-cert'} onClick={() => selectBond(bond)} title="Generate fidelity bond certificate">Cert</button>
+                      <button class={selectedBond()?.index === bond.index ? 'btn-cert active' : 'btn-cert'} onClick={() => selectBond(bond)} disabled={isXpub()} title={isXpub() ? 'Load mnemonic to sign certificates' : 'Generate fidelity bond certificate'}>Cert</button>
                     </td>
                   </tr>)}
               </For>
@@ -84,8 +97,8 @@ export default function TimelockBonds(props) {
           </table>
         </div>
 
-        <Show when={selectedBond()}>
-          {(bond) => (<CertificateGenerator mnemonic={props.mnemonic} passphrase={props.passphrase} bond={bond()} onClose={() => setSelectedBond(null)}/>)}
+        <Show when={selectedBond() && mnemonicSource()}>
+          <CertificateGenerator mnemonic={mnemonicSource().mnemonic} passphrase={mnemonicSource().passphrase} bond={selectedBond()} onClose={() => setSelectedBond(null)}/>
         </Show>
       </Show>
     </div>);
