@@ -97,6 +97,15 @@ body {
   font-size: 0.8rem;
 }
 
+.app-footer a {
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  color: var(--accent);
+}
+
 /* ── Tabs ── */
 
 .tab-nav {
@@ -713,5 +722,24 @@ tr:hover td {
 .xpub-hint {
   font-size: 0.85rem;
   color: var(--text-dim);
-  line-height: 1.5;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.xpub-hint ul {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.xpub-hint code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
 }

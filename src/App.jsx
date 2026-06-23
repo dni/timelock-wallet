@@ -1,11 +1,9 @@
 import { createSignal, Show } from 'solid-js';
-import SecurityWarning from './components/SecurityWarning';
 import MnemonicPanel from './components/MnemonicPanel';
 import TimelockBonds from './components/TimelockBonds';
 export default function App() {
     const [tab, setTab] = createSignal('wallet');
     const [keySource, setKeySource] = createSignal(null);
-    const [inputMode, setInputMode] = createSignal('mnemonic');
     return (<div class="app">
       <header class="app-header">
         <div class="header-inner">
@@ -21,12 +19,8 @@ export default function App() {
       </header>
 
       <main class="app-main">
-        <Show when={inputMode() === 'mnemonic'}>
-          <SecurityWarning />
-        </Show>
-
         <Show when={tab() === 'wallet'}>
-          <MnemonicPanel keySource={keySource()} onKeySourceChange={setKeySource} inputMode={inputMode()} onInputModeChange={setInputMode}/>
+          <MnemonicPanel keySource={keySource()} onKeySourceChange={setKeySource}/>
         </Show>
 
         <Show when={tab() === 'bonds' && !!keySource()}>
@@ -35,7 +29,13 @@ export default function App() {
       </main>
 
       <footer class="app-footer">
-        <p>Offline tool · BIP39 / BIP84 / BIP46 · Private keys never leave this browser</p>
+        <p>
+          Offline tool · BIP39 / BIP84 / BIP46 · Private keys never leave this browser
+          {' · '}
+          <a href="https://bip46.dev" target="_blank" rel="noopener noreferrer">bip46.dev</a>
+          {' · '}
+          <a href="https://github.com/dni/timelock-wallet" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </p>
       </footer>
     </div>);
 }

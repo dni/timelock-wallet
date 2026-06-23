@@ -1,7 +1,16 @@
 import { createSignal, Show } from 'solid-js'
 
+const STORAGE_KEY = 'security-warning-dismissed'
+
 export default function SecurityWarning() {
-  const [dismissed, setDismissed] = createSignal(false)
+  const [dismissed, setDismissed] = createSignal(
+    localStorage.getItem(STORAGE_KEY) === '1'
+  )
+
+  function dismiss() {
+    localStorage.setItem(STORAGE_KEY, '1')
+    setDismissed(true)
+  }
 
   return (
     <Show when={!dismissed()}>
@@ -14,7 +23,7 @@ export default function SecurityWarning() {
             <li>Never share your mnemonic, seed hex, or xprv with anyone.</li>
             <li>Clear this browser tab and history after use.</li>
           </ul>
-          <button class="btn-dismiss" onClick={() => setDismissed(true)}>
+          <button class="btn-dismiss" onClick={dismiss}>
             I understand, continue
           </button>
         </div>

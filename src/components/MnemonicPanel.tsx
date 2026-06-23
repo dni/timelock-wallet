@@ -10,17 +10,16 @@ import {
 import WordGrid from './WordGrid'
 import SeedInfo from './SeedInfo'
 import StandardAddresses from './StandardAddresses'
+import SecurityWarning from './SecurityWarning'
 import type { KeySource } from '../types'
 
 interface Props {
   keySource: KeySource | null
   onKeySourceChange: (ks: KeySource | null) => void
-  inputMode: 'mnemonic' | 'xpub'
-  onInputModeChange: (mode: 'mnemonic' | 'xpub') => void
 }
 
 export default function MnemonicPanel(props: Props) {
-  const inputMode = () => props.inputMode
+  const [inputMode, setInputMode] = createSignal<'mnemonic' | 'xpub'>('mnemonic')
 
   // mnemonic state
   const [wordCount, setWordCount] = createSignal<12 | 24>(12)
@@ -36,7 +35,7 @@ export default function MnemonicPanel(props: Props) {
   const [xpubError, setXpubError] = createSignal('')
 
   function switchMode(mode: 'mnemonic' | 'xpub') {
-    props.onInputModeChange(mode)
+    setInputMode(mode)
     setMnemonicError('')
     setXpubError('')
     if (mode === 'mnemonic' && mnemonic()) {
@@ -106,6 +105,10 @@ export default function MnemonicPanel(props: Props) {
 
   return (
     <div class="mnemonic-panel">
+      <Show when={inputMode() === 'mnemonic'}>
+        <SecurityWarning />
+      </Show>
+
       <div class="section controls-section">
         <div class="word-count-toggle" style={{ 'margin-bottom': '1rem' }}>
           <button
@@ -154,7 +157,12 @@ export default function MnemonicPanel(props: Props) {
 
         <Show when={inputMode() === 'xpub'}>
           <div class="xpub-hint">
-            Paste your account-level xpub or zpub at m/84'/0'/0' — watch-only, no private keys loaded.
+            <p>Export your account public key at path <code>m/84'/0'/0'</code> (BIP84, native segwit) from your wallet and paste it below.</p>
+            <ul>
+              <li><strong>Hardware wallets</strong> (Ledger, Trezor, Coldcard): export as <code>zpub</code> — the <code>zpub</code> prefix confirms the BIP84 path.</li>
+              <li><strong>Sparrow / Electrum</strong>: Wallet → Information → Master Public Key, make sure the script type is set to <em>native segwit</em>.</li>
+            </ul>
+            <p>Watch-only mode — no private keys are loaded, certificate signing is unavailable.</p>
           </div>
           <div class="manual-input" style={{ 'margin-top': '0.75rem' }}>
             <textarea
