@@ -7,6 +7,7 @@ import TimelockBonds from './components/TimelockBonds'
 export default function App() {
   const [tab, setTab] = createSignal<Tab>('wallet')
   const [keySource, setKeySource] = createSignal<KeySource | null>(null)
+  const [inputMode, setInputMode] = createSignal<'mnemonic' | 'xpub'>('mnemonic')
 
   return (
     <div class="app">
@@ -32,12 +33,16 @@ export default function App() {
       </header>
 
       <main class="app-main">
-        <SecurityWarning />
+        <Show when={inputMode() === 'mnemonic'}>
+          <SecurityWarning />
+        </Show>
 
         <Show when={tab() === 'wallet'}>
           <MnemonicPanel
             keySource={keySource()}
             onKeySourceChange={setKeySource}
+            inputMode={inputMode()}
+            onInputModeChange={setInputMode}
           />
         </Show>
 

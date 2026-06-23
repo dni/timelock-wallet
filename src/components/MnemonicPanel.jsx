@@ -4,7 +4,7 @@ import WordGrid from './WordGrid';
 import SeedInfo from './SeedInfo';
 import StandardAddresses from './StandardAddresses';
 export default function MnemonicPanel(props) {
-    const [inputMode, setInputMode] = createSignal('mnemonic');
+    const inputMode = () => props.inputMode;
     // mnemonic state
     const [wordCount, setWordCount] = createSignal(12);
     const [showManual, setShowManual] = createSignal(false);
@@ -17,7 +17,7 @@ export default function MnemonicPanel(props) {
     const [activeXpub, setActiveXpub] = createSignal('');
     const [xpubError, setXpubError] = createSignal('');
     function switchMode(mode) {
-        setInputMode(mode);
+        props.onInputModeChange(mode);
         setMnemonicError('');
         setXpubError('');
         if (mode === 'mnemonic' && mnemonic()) {
@@ -56,8 +56,9 @@ export default function MnemonicPanel(props) {
     }
     function handleXpubImport() {
         const xpub = xpubInput().trim();
-        if (!validateXpub(xpub)) {
-            setXpubError("Invalid xpub — paste a valid account xpub or zpub (m/84'/0'/0')");
+        const err = validateXpub(xpub);
+        if (err) {
+            setXpubError(err);
             return;
         }
         setXpubError('');

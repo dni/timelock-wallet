@@ -40,14 +40,26 @@ function parseAccountKey(xpub) {
         return HDKey.fromExtendedKey(xpub, ZPUB_VERSIONS);
     }
 }
+// Returns null if valid, or an error string describing the problem.
 export function validateXpub(xpub) {
+    let key;
     try {
-        parseAccountKey(xpub.trim());
-        return true;
+        key = parseAccountKey(xpub.trim());
     }
     catch {
-        return false;
+        return 'Not a valid extended public key';
     }
+    if (key.depth !== 3) {
+        return `Wrong key depth: expected 3 (account level m/84'/0'/0') but got ${key.depth}`;
+    }
+    const HARDENED = 0x80000000;
+    if (key.index !== HARDENED) {
+        const got = key.index >= HARDENED
+            ? `${key.index - HARDENED}'`
+            : String(key.index);
+        return `Wrong account index: expected 0' but got ${got}`;
+    }
+    return null;
 }
 export function deriveStandardAddressesFromXpub(xpub, count = 10) {
     const account = parseAccountKey(xpub.trim());

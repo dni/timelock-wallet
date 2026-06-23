@@ -12,15 +12,15 @@ import SeedInfo from './SeedInfo'
 import StandardAddresses from './StandardAddresses'
 import type { KeySource } from '../types'
 
-type InputMode = 'mnemonic' | 'xpub'
-
 interface Props {
   keySource: KeySource | null
   onKeySourceChange: (ks: KeySource | null) => void
+  inputMode: 'mnemonic' | 'xpub'
+  onInputModeChange: (mode: 'mnemonic' | 'xpub') => void
 }
 
 export default function MnemonicPanel(props: Props) {
-  const [inputMode, setInputMode] = createSignal<InputMode>('mnemonic')
+  const inputMode = () => props.inputMode
 
   // mnemonic state
   const [wordCount, setWordCount] = createSignal<12 | 24>(12)
@@ -35,8 +35,8 @@ export default function MnemonicPanel(props: Props) {
   const [activeXpub, setActiveXpub] = createSignal('')
   const [xpubError, setXpubError] = createSignal('')
 
-  function switchMode(mode: InputMode) {
-    setInputMode(mode)
+  function switchMode(mode: 'mnemonic' | 'xpub') {
+    props.onInputModeChange(mode)
     setMnemonicError('')
     setXpubError('')
     if (mode === 'mnemonic' && mnemonic()) {
@@ -77,8 +77,9 @@ export default function MnemonicPanel(props: Props) {
 
   function handleXpubImport() {
     const xpub = xpubInput().trim()
-    if (!validateXpub(xpub)) {
-      setXpubError("Invalid xpub — paste a valid account xpub or zpub (m/84'/0'/0')")
+    const err = validateXpub(xpub)
+    if (err) {
+      setXpubError(err)
       return
     }
     setXpubError('')

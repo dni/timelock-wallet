@@ -5,6 +5,7 @@ import TimelockBonds from './components/TimelockBonds';
 export default function App() {
     const [tab, setTab] = createSignal('wallet');
     const [keySource, setKeySource] = createSignal(null);
+    const [inputMode, setInputMode] = createSignal('mnemonic');
     return (<div class="app">
       <header class="app-header">
         <div class="header-inner">
@@ -20,10 +21,12 @@ export default function App() {
       </header>
 
       <main class="app-main">
-        <SecurityWarning />
+        <Show when={inputMode() === 'mnemonic'}>
+          <SecurityWarning />
+        </Show>
 
         <Show when={tab() === 'wallet'}>
-          <MnemonicPanel keySource={keySource()} onKeySourceChange={setKeySource}/>
+          <MnemonicPanel keySource={keySource()} onKeySourceChange={setKeySource} inputMode={inputMode()} onInputModeChange={setInputMode}/>
         </Show>
 
         <Show when={tab() === 'bonds' && !!keySource()}>
