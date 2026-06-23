@@ -11,7 +11,7 @@ export default function App() {
         <div class="header-inner">
           <div class="header-title">
             <span class="header-icon">₿</span>
-            <h1>Bitcoin Timelock Wallet</h1>
+            <h1>Timelock Wallet</h1>
           </div>
           <nav class="tab-nav">
             <button class={tab() === 'wallet' ? 'tab-btn active' : 'tab-btn'} onClick={() => setTab('wallet')}>Wallet / BIP39</button>

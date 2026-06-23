@@ -557,3 +557,148 @@ tr:hover td {
   padding: 1rem 0;
   font-style: italic;
 }
+
+/* ── Cert button in table ── */
+
+.btn-cert {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.btn-cert:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-cert.active {
+  background: var(--warn-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.row-selected td {
+  background: #1a1000;
+}
+
+/* ── Certificate Generator ── */
+
+.cert-generator {
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  margin-top: 1px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.cert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  gap: 1rem;
+}
+
+.cert-bond-info {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-family: 'Courier New', Courier, monospace;
+  word-break: break-all;
+}
+
+.btn-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-close:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.cert-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cert-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cert-step-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.2rem;
+}
+
+.hex-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.hex-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.expiry-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.expiry-info {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.expiry-hint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.cert-output {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cert-output .cert-step-title {
+  color: var(--green);
+}

@@ -25,4 +25,15 @@ export interface TimelockBond {
   witnessScriptHex: string
 }
 
+export interface Certificate {
+  message: string
+  certPubkeyHex: string
+  certPrivkeyHex: string
+  certExpiry: number
+  expiryBlockHeight: number
+  expiryApproxDate: string
+  bondPubkeyHex: string
+  signatureBase64: string
+}
+
 export type Tab = 'wallet' | 'bonds'

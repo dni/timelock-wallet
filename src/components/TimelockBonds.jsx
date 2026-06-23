@@ -1,10 +1,12 @@
 import { createSignal, createMemo, For, Show } from 'solid-js';
 import { deriveBonds } from '../lib/timelock';
+import CertificateGenerator from './CertificateGenerator';
 const MIN_YEAR = 2020;
 const MAX_YEAR = 2099;
 export default function TimelockBonds(props) {
     const [filterYear, setFilterYear] = createSignal(new Date().getUTCFullYear());
     const [showScript, setShowScript] = createSignal(false);
+    const [selectedBond, setSelectedBond] = createSignal(null);
     const year = () => Math.max(MIN_YEAR, Math.min(MAX_YEAR, filterYear()));
     const startIndex = () => (year() - MIN_YEAR) * 12;
     const endIndex = () => startIndex() + 11;
@@ -18,6 +20,9 @@ export default function TimelockBonds(props) {
             return [];
         }
     });
+    function selectBond(bond) {
+        setSelectedBond(b => b?.index === bond.index ? null : bond);
+    }
     return (<div class="timelock-bonds">
       <div class="section">
         <h2>BIP46 Fidelity Bond Addresses</h2>
@@ -26,11 +31,11 @@ export default function TimelockBonds(props) {
         <div class="filter-row">
           <label class="year-label">
             Year
-            <input type="number" min={MIN_YEAR} max={MAX_YEAR} value={year()} onInput={(e) => setFilterYear(parseInt(e.currentTarget.value) || MIN_YEAR)} class="year-input"/>
+            <input type="number" min={MIN_YEAR} max={MAX_YEAR} value={year()} onInput={(e) => { setFilterYear(parseInt(e.currentTarget.value) || MIN_YEAR); setSelectedBond(null); }} class="year-input"/>
           </label>
           <div class="year-nav">
-            <button class="btn-nav" onClick={() => setFilterYear(year() - 1)} disabled={year() <= MIN_YEAR}>← Prev</button>
-            <button class="btn-nav" onClick={() => setFilterYear(year() + 1)} disabled={year() >= MAX_YEAR}>Next →</button>
+            <button class="btn-nav" onClick={() => { setFilterYear(year() - 1); setSelectedBond(null); }} disabled={year() <= MIN_YEAR}>← Prev</button>
+            <button class="btn-nav" onClick={() => { setFilterYear(year() + 1); setSelectedBond(null); }} disabled={year() >= MAX_YEAR}>Next →</button>
           </div>
           <label class="toggle-label">
             <input type="checkbox" checked={showScript()} onChange={(e) => setShowScript(e.currentTarget.checked)}/>
@@ -44,7 +49,7 @@ export default function TimelockBonds(props) {
       </div>
 
       <Show when={bonds().length > 0} fallback={<div class="loading">Deriving keys…</div>}>
-        <div class="table-wrap">
+        <div class="table-wrap section" style={{ padding: 0 }}>
           <table class="bonds-table">
             <thead>
               <tr>
@@ -56,11 +61,12 @@ export default function TimelockBonds(props) {
                 <Show when={showScript()}>
                   <th>Witness Script</th>
                 </Show>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               <For each={bonds()}>
-                {(bond) => (<tr>
+                {(bond) => (<tr class={selectedBond()?.index === bond.index ? 'row-selected' : ''}>
                     <td>{bond.index}</td>
                     <td>{bond.timelockDate}</td>
                     <td class="mono">{bond.timelockTs}</td>
@@ -69,11 +75,18 @@ export default function TimelockBonds(props) {
                     <Show when={showScript()}>
                       <td class="mono script-cell">{bond.witnessScriptHex}</td>
                     </Show>
+                    <td>
+                      <button class={selectedBond()?.index === bond.index ? 'btn-cert active' : 'btn-cert'} onClick={() => selectBond(bond)} title="Generate fidelity bond certificate">Cert</button>
+                    </td>
                   </tr>)}
               </For>
             </tbody>
           </table>
         </div>
+
+        <Show when={selectedBond()}>
+          {(bond) => (<CertificateGenerator mnemonic={props.mnemonic} passphrase={props.passphrase} bond={bond()} onClose={() => setSelectedBond(null)}/>)}
+        </Show>
       </Show>
     </div>);
 }
